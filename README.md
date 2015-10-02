@@ -1,6 +1,6 @@
 enetpp
 ---
-A header only C++11 networking library that internally uses ENet (https://github.com/lsalzman/enet). ENet's purpose is to provide a relatively thin, simple and robust network communication layer on top of UDP.
+A header only C++11 networking library that internally uses [ENet](http://enet.bespin.org/)
 
 This is an opinionated wrapper. Instead of raw ENet functionality, client and server objects are provided. Both of which spawn a worker thread to make sure networking communication is never interupted by the main thread.
 
@@ -8,8 +8,8 @@ Getting Started
 ---
 1. clone this repository
 2. clone enet's repository (https://github.com/lsalzman/enet)
-3. enet itself is not header only, you will have to build it as a library. It uses CMake so pretty simple.
-4. add additional include directories : enet/include and enetpp/include
+3. build enet as a library and link it to your project
+4. add additional include directories to your project : enet/include and enetpp/include
 
 Global state
 ---
@@ -51,7 +51,7 @@ The enetpp::server object is a bit more complicated than the client. It is templ
 
 	struct server_client {
 		unsigned int _uid;
-		unsigned int get_uid() const { return 123; } //MUST return globally unique value here
+		unsigned int get_uid() const { return _uid; } //MUST return globally unique value here
 	};
 
 	unsigned int next_uid = 0;
