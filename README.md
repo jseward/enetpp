@@ -89,6 +89,16 @@ The enetpp::server object is a bit more complicated than the client. It is templ
 
 	server.stop_listening();
 
+Extra
+---
+Scan through client.h and server.h for more advanced features.
+- trace handler
+- more params (ex. timeout)
+	
+Todo
+---
+- expose metrics and counters (ex. average roundtrip time)	
+
 Sample app
 ---
 There is a sample app included that will spawn a server and client and send messages from client->server->other clients randomly. Use CMake to build. Requires the variable ENET_ROOT_PATH to be set.
