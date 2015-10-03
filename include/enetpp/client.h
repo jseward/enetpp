@@ -36,7 +36,7 @@ namespace enetpp {
 		client::~client() {
 			//responsibility of owners to make sure disconnect is always called. not calling disconnect() in destructor due to
 			//trace_handler side effects.
-			assert(_thread == nullptr);
+			assert(!is_connecting_or_connected());
 			assert(_packet_queue.empty());
 			assert(_event_queue.empty());
 			assert(_event_queue_copy.empty());
@@ -63,7 +63,7 @@ namespace enetpp {
 		}
 
 		void client::disconnect() {
-			if (_thread != nullptr) {
+			if (is_connecting_or_connected()) {
 				_should_exit_thread = true;
 				_thread->join();
 				_thread.release();
@@ -75,7 +75,7 @@ namespace enetpp {
 
 		void client::send_packet(enet_uint8 channel_id, const enet_uint8* data, size_t data_size, enet_uint32 flags) {
 			assert(is_connecting_or_connected());
-			if (_thread != nullptr) {
+			if (is_connecting_or_connected()) {
 				std::lock_guard<std::mutex> lock(_packet_queue_mutex);
 				auto packet = enet_packet_create(data, data_size, flags);
 				_packet_queue.emplace(channel_id, packet);
