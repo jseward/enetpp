@@ -9,19 +9,19 @@ namespace enetpp {
 	public:
 		enet_uint8 _channel_id;
 		ENetPacket* _packet;
-		unsigned int _client_uid;
+		unsigned int _client_id;
 
 	public:
 		server_queued_packet()
 			: _channel_id(0)
 			, _packet(nullptr) 
-			, _client_uid(0) {
+			, _client_id(0) {
 		}
 
-		server_queued_packet(enet_uint8 channel_id, ENetPacket* packet, unsigned int client_uid)
+		server_queued_packet(enet_uint8 channel_id, ENetPacket* packet, unsigned int client_id)
 			: _channel_id(channel_id)
 			, _packet(packet) 
-			, _client_uid(client_uid) {
+			, _client_id(client_id) {
 		}
 	};
 

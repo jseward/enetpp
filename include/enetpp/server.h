@@ -74,6 +74,8 @@ namespace enetpp {
 			assert(params._listen_port != 0);
 			assert(params._initialize_client_function != nullptr);
 
+			trace("listening on port " + std::to_string(params._listen_port));
+
 			_should_exit_thread = false;
 			_thread = std::make_unique<std::thread>(&server::run_in_thread, this, params);
 		}
@@ -90,12 +92,12 @@ namespace enetpp {
 			delete_all_connected_clients();
 		}
 
-		void send_packet_to(unsigned int client_uid, enet_uint8 channel_id, const enet_uint8* data, size_t data_size, enet_uint32 flags) {
+		void send_packet_to(unsigned int client_id, enet_uint8 channel_id, const enet_uint8* data, size_t data_size, enet_uint32 flags) {
 			assert(is_listening());
 			if (_thread != nullptr) {
 				std::lock_guard<std::mutex> lock(_packet_queue_mutex);
 				auto packet = enet_packet_create(data, data_size, flags);
-				_packet_queue.emplace(channel_id, packet, client_uid);
+				_packet_queue.emplace(channel_id, packet, client_id);
 			}
 		}
 
@@ -106,7 +108,7 @@ namespace enetpp {
 				auto packet = enet_packet_create(data, data_size, flags);
 				for (auto c : _connected_clients) {
 					if (predicate(*c)) {
-						_packet_queue.emplace(channel_id, packet, c->get_uid());
+						_packet_queue.emplace(channel_id, packet, c->get_id());
 					}
 				}
 			}
@@ -114,7 +116,7 @@ namespace enetpp {
 
 		void consume_events(
 			std::function<void(ClientT& client)> on_client_connected,
-			std::function<void(unsigned int client_uid)> on_client_disconnected,
+			std::function<void(unsigned int client_id)> on_client_disconnected,
 			std::function<void(ClientT& client, const enet_uint8* data, size_t data_size)> on_client_data_received) {
 
 			if (!_event_queue.empty()) {
@@ -139,9 +141,9 @@ namespace enetpp {
 							auto iter = std::find(_connected_clients.begin(), _connected_clients.end(), e._client);
 							assert(iter != _connected_clients.end());
 							_connected_clients.erase(iter);
-							unsigned int client_uid = e._client->get_uid();
+							unsigned int client_id = e._client->get_id();
 							delete e._client;
-							on_client_disconnected(client_uid);
+							on_client_disconnected(client_id);
 							break;
 						}
 
@@ -212,7 +214,7 @@ namespace enetpp {
 					auto qp = _packet_queue.front();
 					_packet_queue.pop();
 
-					auto pi = _thread_peer_map.find(qp._client_uid);
+					auto pi = _thread_peer_map.find(qp._client_id);
 					if (pi != _thread_peer_map.end()) {
 
 						//enet_peer_send fails if state not connected. was getting random asserts on peers disconnecting and going into ENET_PEER_STATE_ZOMBIE.
@@ -278,7 +280,7 @@ namespace enetpp {
 			assert(e.peer->data == nullptr);
 			e.peer->data = client;
 
-			_thread_peer_map[client->get_uid()] = e.peer;
+			_thread_peer_map[client->get_id()] = e.peer;
 
 			{
 				std::lock_guard<std::mutex> lock(_event_queue_mutex);
@@ -289,7 +291,7 @@ namespace enetpp {
 		void handle_disconnect_event_in_thread(const ENetEvent& e) {
 			auto client = reinterpret_cast<ClientT*>(e.peer->data);
 			if (client != nullptr) {
-				auto iter = _thread_peer_map.find(client->get_uid());
+				auto iter = _thread_peer_map.find(client->get_id());
 				assert(iter != _thread_peer_map.end());
 				assert(iter->second == e.peer);
 				e.peer->data = nullptr;
