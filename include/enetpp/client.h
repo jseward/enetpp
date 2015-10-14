@@ -9,6 +9,7 @@
 #include "global_state.h"
 #include "client_connect_params.h"
 #include "client_queued_packet.h"
+#include "client_statistics.h"
 #include "set_current_thread_name.h"
 #include "trace_handler.h"
 
@@ -28,6 +29,8 @@ namespace enetpp {
 		bool _should_exit_thread;
 		std::unique_ptr<std::thread> _thread;
 
+		client_statistics _statistics;
+
 	public:
 		client::client()
 			: _should_exit_thread(false) {
@@ -36,7 +39,7 @@ namespace enetpp {
 		client::~client() {
 			//responsibility of owners to make sure disconnect is always called. not calling disconnect() in destructor due to
 			//trace_handler side effects.
-			assert(!is_connecting_or_connected());
+			assert(_thread == nullptr);
 			assert(_packet_queue.empty());
 			assert(_event_queue.empty());
 			assert(_event_queue_copy.empty());
@@ -58,12 +61,14 @@ namespace enetpp {
 			assert(params._server_port != 0);
 			assert(!params._server_host_name.empty());
 
+			trace("connecting to '" + params._server_host_name + ":" + std::to_string(params._server_port) + "'");
+
 			_should_exit_thread = false;
 			_thread = std::make_unique<std::thread>(&client::run_in_thread, this, params);
 		}
 
 		void client::disconnect() {
-			if (is_connecting_or_connected()) {
+			if (_thread != nullptr) {
 				_should_exit_thread = true;
 				_thread->join();
 				_thread.release();
@@ -75,7 +80,7 @@ namespace enetpp {
 
 		void client::send_packet(enet_uint8 channel_id, const enet_uint8* data, size_t data_size, enet_uint32 flags) {
 			assert(is_connecting_or_connected());
-			if (is_connecting_or_connected()) {
+			if (_thread != nullptr) {
 				std::lock_guard<std::mutex> lock(_packet_queue_mutex);
 				auto packet = enet_packet_create(data, data_size, flags);
 				_packet_queue.emplace(channel_id, packet);
@@ -138,6 +143,10 @@ namespace enetpp {
 			}
 		}
 
+		const client_statistics& get_statistics() const {
+			return _statistics;
+		}
+
 	private:
 		void client::destroy_all_queued_packets() {
 			std::lock_guard<std::mutex> lock(_packet_queue_mutex);
@@ -185,6 +194,9 @@ namespace enetpp {
 			enet_uint32 disconnect_start_time = 0;
 
 			while (peer != nullptr) {
+
+				_statistics._round_trip_time_in_ms = peer->roundTripTime;
+				_statistics._round_trip_time_variance_in_ms = peer->roundTripTimeVariance;
 
 				if (_should_exit_thread) {
 					if (!is_disconnecting) {
