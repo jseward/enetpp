@@ -1,6 +1,7 @@
 #ifndef ENETPP_SERVER_H_
 #define ENETPP_SERVER_H_
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <thread>
@@ -43,7 +44,7 @@ namespace enetpp {
 		std::mutex _event_queue_mutex;
 
 	public:
-		server() 
+		server()
 			: _should_exit_thread(false) {
 		}
 
@@ -116,7 +117,7 @@ namespace enetpp {
 
 		void consume_events(
 			std::function<void(ClientT& client)> on_client_connected,
-			std::function<void(unsigned int client_id)> on_client_disconnected,
+			std::function<void(ClientT& client)> on_client_disconnected,
 			std::function<void(ClientT& client, const enet_uint8* data, size_t data_size)> on_client_data_received) {
 
 			if (!_event_queue.empty()) {
@@ -125,7 +126,7 @@ namespace enetpp {
 					std::lock_guard<std::mutex> lock(_event_queue_mutex);
 					assert(_event_queue_copy.empty());
 					_event_queue_copy = _event_queue;
-					_event_queue = {};
+					_event_queue = std::queue<event_type>();
 				}
 
 				while (!_event_queue_copy.empty()) {
@@ -141,9 +142,8 @@ namespace enetpp {
 							auto iter = std::find(_connected_clients.begin(), _connected_clients.end(), e._client);
 							assert(iter != _connected_clients.end());
 							_connected_clients.erase(iter);
-							unsigned int client_id = e._client->get_id();
+							on_client_disconnected(*e._client);
 							delete e._client;
-							on_client_disconnected(client_id);
 							break;
 						}
 
@@ -182,6 +182,9 @@ namespace enetpp {
 				trace("enet_host_create failed");
 			}
 
+			if(params._compress_with_range_coder) {
+				enet_host_compress_with_range_coder(host);
+			}
 			while (host != nullptr) {
 
 				if (_should_exit_thread) {
@@ -271,7 +274,7 @@ namespace enetpp {
 			enet_address_get_host_ip(&e.peer->address, peer_ip, 256);
 
 			//!IMPORTANT! PeerData and it's UID must be created immediately in this worker thread. Otherwise
-			//there is a chance the first few packets are received on the worker thread when the peer is not 
+			//there is a chance the first few packets are received on the worker thread when the peer is not
 			//initialized with data causing them to be discarded.
 
 			auto client = new ClientT();

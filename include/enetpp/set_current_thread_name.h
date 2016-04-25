@@ -2,7 +2,9 @@
 #define ENETPP_SET_CURRENT_THREAD_NAME_H_
 
 #include "enet/enet.h"
-
+#ifdef __GNUC__
+#include <seh.h>
+#endif
 namespace enetpp {
 
 	inline void set_current_thread_name(const char* name) {
@@ -26,12 +28,22 @@ namespace enetpp {
 		info.szName = name;
 		info.dwThreadID = ::GetCurrentThreadId();
 		info.dwFlags = 0;
-
+#ifdef __GNUC__
+__seh_try{
+#else
 		__try {
+#endif
 			RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
 		}
+#ifdef __GNUC__
+		__seh_except (EXCEPTION_EXECUTE_HANDLER) {
+#else
 		__except (EXCEPTION_EXECUTE_HANDLER) {
+#endif
 		}
+#ifdef __GNUC__
+__seh_end_except
+#endif
 
 #else
 

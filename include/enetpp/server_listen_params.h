@@ -18,6 +18,7 @@ namespace enetpp {
 		enet_uint32 _incoming_bandwidth;
 		enet_uint32 _outgoing_bandwidth;
 		enet_uint16 _listen_port;
+		bool _compress_with_range_coder;
 		std::chrono::milliseconds _peer_timeout;
 		initialize_client_function _initialize_client_function;
 
@@ -27,6 +28,7 @@ namespace enetpp {
 			, _channel_count(0)
 			, _incoming_bandwidth(0)
 			, _outgoing_bandwidth(0) 
+			, _compress_with_range_coder(false)
 			, _peer_timeout(0) {
 		}
 
@@ -52,6 +54,12 @@ namespace enetpp {
 
 		server_listen_params& set_outgoing_bandwidth(enet_uint32 bandwidth) {
 			_outgoing_bandwidth = bandwidth;
+			return *this;
+		}
+
+			server_listen_params& set_compression
+(bool compression) {
+			_compress_with_range_coder=compression;
 			return *this;
 		}
 
