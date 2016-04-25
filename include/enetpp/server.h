@@ -183,7 +183,7 @@ namespace enetpp {
 			}
 
 			if(params._compress_with_range_coder) {
-				enet_host_compress_with_range_coder(&host);
+				enet_host_compress_with_range_coder(host);
 			}
 			while (host != nullptr) {
 
