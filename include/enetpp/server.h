@@ -182,11 +182,10 @@ namespace enetpp {
 				trace("enet_host_create failed");
 			}
 
-			if(params._compress_with_range_coder) {
-				enet_host_compress_with_range_coder(host);
-			}
 			while (host != nullptr) {
-
+				if(params._compress_with_range_coder) {
+					enet_host_compress_with_range_coder(host);
+				}
 				if (_should_exit_thread) {
 					disconnect_all_peers_in_thread();
 					enet_host_destroy(host);
