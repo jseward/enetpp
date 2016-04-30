@@ -102,7 +102,7 @@ namespace enetpp {
 			}
 		}
 
-		void send_packet_to_all_if(enet_uint8 channel_id, const enet_uint8* data, size_t data_size, enet_uint32 flags, std::function<bool(const ClientT& client)> predicate) {
+		void send_packet_to_all_if(enet_uint8 channel_id, const enet_uint8* data, size_t data_size, enet_uint32 flags, std::function<bool(ClientT& client)> predicate) {
 			assert(is_listening());
 			if (_thread != nullptr) {
 				std::lock_guard<std::mutex> lock(_packet_queue_mutex);
@@ -183,8 +183,13 @@ namespace enetpp {
 			}
 
 			while (host != nullptr) {
-				if(params._compress_with_range_coder) {
+				if(params._compress) {
+					if(params._comp==nullptr) {
 					enet_host_compress_with_range_coder(host);
+					}
+				else {
+					enet_host_compress(host, params._comp);
+					}
 				}
 				if (_should_exit_thread) {
 					disconnect_all_peers_in_thread();

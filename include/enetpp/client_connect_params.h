@@ -13,7 +13,8 @@ namespace enetpp {
 		enet_uint32 _outgoing_bandwidth;
 		std::string _server_host_name;
 		enet_uint16 _server_port;
-bool _compress_with_range_coder;
+		bool _compress;
+		ENetCompressor *_comp;
 		std::chrono::milliseconds _timeout;
 
 	public:
@@ -23,7 +24,8 @@ bool _compress_with_range_coder;
 			, _outgoing_bandwidth(0)
 			, _server_host_name()
 			, _server_port(0)
-			, _compress_with_range_coder(false)
+			, _compress(false)
+			, _comp(nullptr)
 			, _timeout(0) {
 		}
 
@@ -44,7 +46,13 @@ bool _compress_with_range_coder;
 
 		client_connect_params& set_compression
 (bool compression) {
-			_compress_with_range_coder=compression;
+			_compress=compression;
+			return *this;
+		}
+
+		client_connect_params& set_compressor
+(ENetCompressor *comp) {
+			_comp=comp;
 			return *this;
 		}
 

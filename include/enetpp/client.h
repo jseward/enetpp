@@ -179,8 +179,13 @@ namespace enetpp {
 				return;
 			}
 
-			if(params._compress_with_range_coder) {
+			if(params._compress) {
+			if(params._comp!=nullptr) {
+				enet_host_compress(host, params._comp);
+				}
+			else {
 				enet_host_compress_with_range_coder(host);
+				}
 			}
 
 			auto address = params.make_server_address();
