@@ -184,11 +184,7 @@ namespace enetpp {
 
 			while (host != nullptr) {
 				if(params._compress) {
-					if(params._comp==nullptr) {
 					enet_host_compress_with_range_coder(host);
-					}
-				else {
-					enet_host_compress(host, params._comp);
 					}
 				}
 				if (_should_exit_thread) {
