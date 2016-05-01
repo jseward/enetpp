@@ -13,15 +13,19 @@ namespace enetpp {
 		enet_uint32 _outgoing_bandwidth;
 		std::string _server_host_name;
 		enet_uint16 _server_port;
+		bool _compress;
+		ENetCompressor *_comp;
 		std::chrono::milliseconds _timeout;
 
 	public:
-		client_connect_params() 
+		client_connect_params()
 			: _channel_count(0)
 			, _incoming_bandwidth(0)
 			, _outgoing_bandwidth(0)
 			, _server_host_name()
 			, _server_port(0)
+			, _compress(false)
+			, _comp(nullptr)
 			, _timeout(0) {
 		}
 
@@ -37,6 +41,18 @@ namespace enetpp {
 
 		client_connect_params& set_outgoing_bandwidth(enet_uint32 bandwidth) {
 			_outgoing_bandwidth = bandwidth;
+			return *this;
+		}
+
+		client_connect_params& set_compression
+(bool compression) {
+			_compress=compression;
+			return *this;
+		}
+
+		client_connect_params& set_compressor
+(ENetCompressor *comp) {
+			_comp=comp;
 			return *this;
 		}
 
